@@ -86,6 +86,8 @@
         <input id="areaMarket" class="readonly" placeholder="Area / Market" readonly>
         <input id="subDealerCategory" class="readonly" placeholder="Sub-Dealer Category" readonly>
         <input id="annualPotential" class="readonly" placeholder="Annual Potential-AC" readonly>
+        <input id="ownerNameView" class="readonly" placeholder="Owner Name" readonly>
+        <input id="ownerWhatsappView" class="readonly" placeholder="Owner Whatsapp No." readonly>
         <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
         <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
         <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
@@ -94,7 +96,7 @@
       <h2 style="margin-top:18px">Model-wise Monthly Sales</h2>
       <div id="modelsBox" class="models"></div>
 
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec">
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbznLf4IE6JaoJL2-JiXem3-Elcdkvxsbymz01LOrFV9295vBfk8wjZUujw2-GypP7Zt/exec">
         <input type="hidden" name="action" value="submitSales">
         <input type="hidden" name="month" id="f_month">
         <input type="hidden" name="branch" id="f_branch">
@@ -107,6 +109,8 @@
         <input type="hidden" name="storeId" id="f_storeId">
         <input type="hidden" name="subDealerCode" id="f_subDealerCode">
         <input type="hidden" name="subDealerName" id="f_subDealerName">
+        <input type="hidden" name="ownerName" id="f_ownerName">
+        <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
         <input type="hidden" name="city" id="f_city">
         <input type="hidden" name="areaMarket" id="f_areaMarket">
         <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
@@ -126,21 +130,27 @@
       <h2>Add New Sub Dealer</h2>
 
       <div class="grid">
-        <input id="newSubDealerName" placeholder="SubDealer Name">
-        <input id="newCity" placeholder="City">
-        <input id="newAreaMarket" placeholder="Area / Market">
+        <input id="newSubDealerCode" placeholder="Sub Dealer Code (Optional)">
+        <input id="newSubDealerName" placeholder="SubDealer Name *">
+        <input id="newOwnerName" placeholder="Owner Name *">
+        <input id="newOwnerWhatsapp" placeholder="Owner Whatsapp No. *">
+        <input id="newCity" placeholder="City *">
+        <input id="newAreaMarket" placeholder="Area / Market *">
         <select id="newSubDealerCategory">
-          <option value="">Select Category</option>
+          <option value="">Select Category *</option>
           <option value="AC">AC</option>
           <option value="HA">HA</option>
         </select>
-        <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC">
+        <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC *">
       </div>
 
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec">
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbznLf4IE6JaoJL2-JiXem3-Elcdkvxsbymz01LOrFV9295vBfk8wjZUujw2-GypP7Zt/exec">
         <input type="hidden" name="action" value="addDealer">
         <input type="hidden" name="empId" id="add_empId">
+        <input type="hidden" name="subDealerCode" id="add_subDealerCode">
         <input type="hidden" name="subDealerName" id="add_subDealerName">
+        <input type="hidden" name="ownerName" id="add_ownerName">
+        <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
         <input type="hidden" name="city" id="add_city">
         <input type="hidden" name="areaMarket" id="add_areaMarket">
         <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
@@ -157,7 +167,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbznLf4IE6JaoJL2-JiXem3-Elcdkvxsbymz01LOrFV9295vBfk8wjZUujw2-GypP7Zt/exec';
 const MODEL_COLUMNS = ["FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL50","FTKC50","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"];
 
 let currentRSO = null;
@@ -244,11 +254,7 @@ function login(){
   };
 
   const scriptTag = document.createElement('script');
-  scriptTag.src = APPS_SCRIPT_URL
-    + '?action=login'
-    + '&empId=' + encodeURIComponent(empId)
-    + '&password=' + encodeURIComponent(password)
-    + '&callback=' + cb;
+  scriptTag.src = APPS_SCRIPT_URL + '?action=login&empId=' + encodeURIComponent(empId) + '&password=' + encodeURIComponent(password) + '&callback=' + cb;
 
   scriptTag.onerror = function(){
     showMsg('Login request failed. Check Apps Script deployment access or deployment code.', 'error');
@@ -284,6 +290,8 @@ function clearDealerDetails(){
   document.getElementById('areaMarket').value = '';
   document.getElementById('subDealerCategory').value = '';
   document.getElementById('annualPotential').value = '';
+  document.getElementById('ownerNameView').value = '';
+  document.getElementById('ownerWhatsappView').value = '';
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = '';
   document.getElementById('daikinDisplayUpdated').value = '';
@@ -304,6 +312,8 @@ function loadDealerDetails(){
   document.getElementById('areaMarket').value = d.areaMarket || '';
   document.getElementById('subDealerCategory').value = d.subDealerCategory || '';
   document.getElementById('annualPotential').value = d.annualPotential || '';
+  document.getElementById('ownerNameView').value = d.ownerName || '';
+  document.getElementById('ownerWhatsappView').value = d.ownerWhatsapp || '';
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = d.storeTotalDisplay || '';
   document.getElementById('daikinDisplayUpdated').value = d.daikinDisplay || '';
@@ -329,7 +339,6 @@ function submitSales(){
   }
 
   const dealer = filteredSubDealers[Number(idx)];
-
   document.getElementById('f_month').value = month;
   document.getElementById('f_branch').value = currentRSO.branch || '';
   document.getElementById('f_agencyCode').value = currentRSO.agencyCode || '';
@@ -341,6 +350,8 @@ function submitSales(){
   document.getElementById('f_storeId').value = dealer.storeId || '';
   document.getElementById('f_subDealerCode').value = dealer.subDealerCode || '';
   document.getElementById('f_subDealerName').value = dealer.subDealerName || '';
+  document.getElementById('f_ownerName').value = dealer.ownerName || '';
+  document.getElementById('f_ownerWhatsapp').value = dealer.ownerWhatsapp || '';
   document.getElementById('f_city').value = dealer.city || '';
   document.getElementById('f_areaMarket').value = dealer.areaMarket || '';
   document.getElementById('f_subDealerCategory').value = dealer.subDealerCategory || '';
@@ -370,19 +381,25 @@ function submitNewDealer(){
     return;
   }
 
+  const subDealerCode = document.getElementById('newSubDealerCode').value.trim();
   const name = document.getElementById('newSubDealerName').value.trim();
+  const ownerName = document.getElementById('newOwnerName').value.trim();
+  const ownerWhatsapp = document.getElementById('newOwnerWhatsapp').value.trim();
   const city = document.getElementById('newCity').value.trim();
   const area = document.getElementById('newAreaMarket').value.trim();
   const cat = document.getElementById('newSubDealerCategory').value.trim();
   const potential = document.getElementById('newAnnualPotential').value.trim();
 
-  if(!name || !city || !area || !cat){
-    showMsg('Please fill all new sub dealer details', 'error');
+  if(!name || !ownerName || !ownerWhatsapp || !city || !area || !cat || !potential){
+    showMsg('Please fill all mandatory new sub dealer details', 'error');
     return;
   }
 
   document.getElementById('add_empId').value = currentRSO.empId || '';
+  document.getElementById('add_subDealerCode').value = subDealerCode;
   document.getElementById('add_subDealerName').value = name;
+  document.getElementById('add_ownerName').value = ownerName;
+  document.getElementById('add_ownerWhatsapp').value = ownerWhatsapp;
   document.getElementById('add_city').value = city;
   document.getElementById('add_areaMarket').value = area;
   document.getElementById('add_subDealerCategory').value = cat;

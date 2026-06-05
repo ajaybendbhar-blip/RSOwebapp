@@ -82,7 +82,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby7ZIoMF9GuRBp1aea_LUuT7VBZLrS3EJz3HKRQkmi4r9wCnwNIglwYGYB9X09nxxoB/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxQk-JIewCKTOZeMucNA_0zSKS_JS_7yaAMl-xUt_tfIRmUkkrfvP7qWREIjqAJFthL/exec';
 const MODEL_COLUMNS = ["FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL50","FTKC50","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"];
 
 let currentRSO = null;
@@ -100,7 +100,7 @@ async function readJsonSafe(res){
   try {
     return JSON.parse(text);
   } catch(e) {
-    throw new Error('Server returned non-JSON response. Please check Apps Script deployment access and sheet names. Response starts with: ' + text.slice(0,160));
+    throw new Error('Server returned non-JSON response. Check Apps Script deployment, sheet names, or access settings. Response starts with: ' + text.slice(0,160));
   }
 }
 
@@ -127,9 +127,12 @@ async function login(){
 
     showMsg('Checking login...');
     const url = APPS_SCRIPT_URL + '?action=login&empId=' + encodeURIComponent(empId) + '&password=' + encodeURIComponent(password);
-    const res = await fetch(url, { method: 'GET', redirect: 'follow' });
-    const json = await readJsonSafe(res);
+    const res = await fetch(url, {
+      method: 'GET',
+      redirect: 'follow'
+    });
 
+    const json = await readJsonSafe(res);
     if(!json.success) throw new Error(json.message || 'Login failed');
 
     currentRSO = json.profile || {};

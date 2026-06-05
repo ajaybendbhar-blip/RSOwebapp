@@ -6,12 +6,13 @@
   <title>RSO Monthly Sales App</title>
   <style>
     body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#1f2937}
-    .wrap{max-width:1100px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
+    .wrap{max-width:1150px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
     h1,h2{margin:0 0 12px;color:#0f4c5c}
     .section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    input,select,button{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box}
+    input,select,button{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;font-size:14px}
     button{background:#0f766e;color:#fff;border:none;font-weight:700;cursor:pointer}
+    button:hover{background:#0d655e}
     .msg{display:none;padding:12px;border-radius:10px;margin-bottom:12px;white-space:pre-wrap}
     .ok{display:block;background:#ecfdf5;color:#166534}
     .err{display:block;background:#fef2f2;color:#991b1b}
@@ -20,13 +21,24 @@
     .small{font-size:12px;color:#6b7280}
     .readonly{background:#f8fafc}
     iframe{display:none}
+    .tabbar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap}
+    .tab-btn{background:#e2e8f0;color:#0f172a;border:1px solid #cbd5e1;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;width:auto}
+    .tab-btn.active{background:#0f766e;color:#fff;border-color:#0f766e}
+    .tab-panel{display:none}
+    .tab-panel.active{display:block}
+    .title-line{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .pill{padding:6px 10px;border-radius:999px;background:#ecfeff;color:#0f766e;font-size:12px;font-weight:700}
     @media(max-width:900px){.grid,.models{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.grid,.models{grid-template-columns:1fr}}
   </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>RSO Monthly Sales App</h1>
+  <div class="title-line">
+    <h1>RSO Monthly Sales App</h1>
+    <div class="pill">Daikin RSO Reporting</div>
+  </div>
+
   <div id="msg" class="msg"></div>
 
   <div id="loginSection" class="section">
@@ -36,78 +48,118 @@
       <input id="password" type="password" placeholder="Password" value="Daikin@123">
       <button type="button" onclick="login()">Login</button>
     </div>
+    <div class="small" style="margin-top:8px">Username = Emp Id | Default password = Daikin@123</div>
   </div>
 
   <div id="profileSection" class="section hidden">
     <h2>RSO Details</h2>
     <div class="grid">
-      <input id="branch" class="readonly" readonly>
-      <input id="agencyCode" class="readonly" readonly>
-      <input id="rsoName" class="readonly" readonly>
-      <input id="empIdView" class="readonly" readonly>
-      <input id="asmName" class="readonly" readonly>
-      <input id="ddCode" class="readonly" readonly>
-      <input id="ddName" class="readonly" readonly>
-      <input id="cityView" class="readonly" readonly>
+      <input id="branch" class="readonly" placeholder="Branch" readonly>
+      <input id="agencyCode" class="readonly" placeholder="Agency Code" readonly>
+      <input id="rsoName" class="readonly" placeholder="RSO Name" readonly>
+      <input id="empIdView" class="readonly" placeholder="Emp Id" readonly>
+      <input id="asmName" class="readonly" placeholder="ASM Name" readonly>
+      <input id="ddCode" class="readonly" placeholder="D&D Code" readonly>
+      <input id="ddName" class="readonly" placeholder="D&D Name" readonly>
+      <input id="cityView" class="readonly" placeholder="City" readonly>
       <input id="month" type="month">
     </div>
   </div>
 
-  <div id="entrySection" class="section hidden">
-    <h2>Monthly Sales Entry</h2>
-    <div class="grid">
-      <input id="subDealerSearch" placeholder="Search Sub Dealer Name" oninput="filterSubDealers()">
-      <select id="subDealerDropdown" onchange="loadDealerDetails()">
-        <option value="">Select Sub Dealer</option>
-      </select>
-      <input id="subDealerCode" class="readonly" readonly>
-      <input id="storeId" class="readonly" readonly>
-      <input id="dealerCity" class="readonly" readonly>
-      <input id="areaMarket" class="readonly" readonly>
-      <input id="subDealerCategory" class="readonly" readonly>
-      <input id="annualPotential" class="readonly" readonly>
-      <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
-      <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
-      <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
+  <div id="mainTabsSection" class="section hidden">
+    <div class="tabbar" role="tablist" aria-label="RSO Entry Sections">
+      <button type="button" class="tab-btn active" id="tab-sales" role="tab" aria-selected="true" aria-controls="panel-sales" onclick="switchTab('sales')">Model Monthly Sales</button>
+      <button type="button" class="tab-btn" id="tab-dealer" role="tab" aria-selected="false" aria-controls="panel-dealer" onclick="switchTab('dealer')">Add New Sub Dealer</button>
     </div>
 
-    <h2 style="margin-top:18px">Model-wise Monthly Sales</h2>
-    <div id="modelsBox" class="models"></div>
+    <div id="panel-sales" class="tab-panel active" role="tabpanel" aria-labelledby="tab-sales">
+      <h2>Model Monthly Sales</h2>
 
-    <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwIgAUpm1g5lWVcegOScaLaQujHmKUyttsJgAY-AmRODw6AkDFyDh0rDA1O_tARP7qT/exec">
-      <input type="hidden" name="action" value="submitSales">
-      <input type="hidden" name="month" id="f_month">
-      <input type="hidden" name="branch" id="f_branch">
-      <input type="hidden" name="agencyCode" id="f_agencyCode">
-      <input type="hidden" name="rsoName" id="f_rsoName">
-      <input type="hidden" name="empId" id="f_empId">
-      <input type="hidden" name="asmName" id="f_asmName">
-      <input type="hidden" name="ddCode" id="f_ddCode">
-      <input type="hidden" name="ddName" id="f_ddName">
-      <input type="hidden" name="storeId" id="f_storeId">
-      <input type="hidden" name="subDealerCode" id="f_subDealerCode">
-      <input type="hidden" name="subDealerName" id="f_subDealerName">
-      <input type="hidden" name="city" id="f_city">
-      <input type="hidden" name="areaMarket" id="f_areaMarket">
-      <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
-      <input type="hidden" name="annualPotential" id="f_annualPotential">
-      <input type="hidden" name="annualSaleUpdated" id="f_annualSaleUpdated">
-      <input type="hidden" name="storeDisplayUpdated" id="f_storeDisplayUpdated">
-      <input type="hidden" name="daikinDisplayUpdated" id="f_daikinDisplayUpdated">
-      <div id="hiddenModelFields"></div>
-    </form>
+      <div class="grid">
+        <input id="subDealerSearch" placeholder="Search Sub Dealer Name" oninput="filterSubDealers()">
+        <select id="subDealerDropdown" onchange="loadDealerDetails()">
+          <option value="">Select Sub Dealer</option>
+        </select>
+        <input id="subDealerCode" class="readonly" placeholder="Sub Dealer Code" readonly>
+        <input id="storeId" class="readonly" placeholder="Store Id" readonly>
+        <input id="dealerCity" class="readonly" placeholder="City" readonly>
+        <input id="areaMarket" class="readonly" placeholder="Area / Market" readonly>
+        <input id="subDealerCategory" class="readonly" placeholder="Sub-Dealer Category" readonly>
+        <input id="annualPotential" class="readonly" placeholder="Annual Potential-AC" readonly>
+        <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
+        <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
+        <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
+      </div>
+
+      <h2 style="margin-top:18px">Model-wise Monthly Sales</h2>
+      <div id="modelsBox" class="models"></div>
+
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec">
+        <input type="hidden" name="action" value="submitSales">
+        <input type="hidden" name="month" id="f_month">
+        <input type="hidden" name="branch" id="f_branch">
+        <input type="hidden" name="agencyCode" id="f_agencyCode">
+        <input type="hidden" name="rsoName" id="f_rsoName">
+        <input type="hidden" name="empId" id="f_empId">
+        <input type="hidden" name="asmName" id="f_asmName">
+        <input type="hidden" name="ddCode" id="f_ddCode">
+        <input type="hidden" name="ddName" id="f_ddName">
+        <input type="hidden" name="storeId" id="f_storeId">
+        <input type="hidden" name="subDealerCode" id="f_subDealerCode">
+        <input type="hidden" name="subDealerName" id="f_subDealerName">
+        <input type="hidden" name="city" id="f_city">
+        <input type="hidden" name="areaMarket" id="f_areaMarket">
+        <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
+        <input type="hidden" name="annualPotential" id="f_annualPotential">
+        <input type="hidden" name="annualSaleUpdated" id="f_annualSaleUpdated">
+        <input type="hidden" name="storeDisplayUpdated" id="f_storeDisplayUpdated">
+        <input type="hidden" name="daikinDisplayUpdated" id="f_daikinDisplayUpdated">
+        <div id="hiddenModelFields"></div>
+      </form>
+
+      <div style="margin-top:16px">
+        <button type="button" onclick="submitSales()">Submit Monthly Sales</button>
+      </div>
+    </div>
+
+    <div id="panel-dealer" class="tab-panel" role="tabpanel" aria-labelledby="tab-dealer">
+      <h2>Add New Sub Dealer</h2>
+
+      <div class="grid">
+        <input id="newSubDealerName" placeholder="SubDealer Name">
+        <input id="newCity" placeholder="City">
+        <input id="newAreaMarket" placeholder="Area / Market">
+        <select id="newSubDealerCategory">
+          <option value="">Select Category</option>
+          <option value="AC">AC</option>
+          <option value="HA">HA</option>
+        </select>
+        <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC">
+      </div>
+
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec">
+        <input type="hidden" name="action" value="addDealer">
+        <input type="hidden" name="empId" id="add_empId">
+        <input type="hidden" name="subDealerName" id="add_subDealerName">
+        <input type="hidden" name="city" id="add_city">
+        <input type="hidden" name="areaMarket" id="add_areaMarket">
+        <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
+        <input type="hidden" name="annualPotential" id="add_annualPotential">
+      </form>
+
+      <div style="margin-top:16px">
+        <button type="button" onclick="submitNewDealer()">Save New Sub Dealer</button>
+      </div>
+    </div>
 
     <iframe name="hiddenFrame"></iframe>
-
-    <div style="margin-top:16px">
-      <button type="button" onclick="submitSales()">Submit Monthly Sales</button>
-    </div>
   </div>
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwIgAUpm1g5lWVcegOScaLaQujHmKUyttsJgAY-AmRODw6AkDFyDh0rDA1O_tARP7qT/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwwpBeuxI9iZC6jsS6SZHcL0xEtBDeehFy1bHWiuog5GME6omvsf2MONRHxDaVaQ_2U/exec';
 const MODEL_COLUMNS = ["FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL50","FTKC50","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"];
+
 let currentRSO = null;
 let subDealers = [];
 let filteredSubDealers = [];
@@ -118,12 +170,30 @@ function showMsg(text, type='ok'){
   el.textContent = text;
 }
 
+function switchTab(tabName){
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active');
+    btn.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
+
+  if(tabName === 'sales'){
+    document.getElementById('tab-sales').classList.add('active');
+    document.getElementById('tab-sales').setAttribute('aria-selected', 'true');
+    document.getElementById('panel-sales').classList.add('active');
+  } else {
+    document.getElementById('tab-dealer').classList.add('active');
+    document.getElementById('tab-dealer').setAttribute('aria-selected', 'true');
+    document.getElementById('panel-dealer').classList.add('active');
+  }
+}
+
 function createModelInputs(){
   const box = document.getElementById('modelsBox');
   box.innerHTML = '';
   MODEL_COLUMNS.forEach(model => {
     const wrap = document.createElement('div');
-    wrap.innerHTML = '<label class=\"small\">' + model + '</label><input type=\"number\" min=\"0\" id=\"model_' + model + '\" placeholder=\"' + model + ' Qty\">';
+    wrap.innerHTML = '<label class="small">' + model + '</label><input type="number" min="0" id="model_' + model + '" placeholder="' + model + ' Qty">';
     box.appendChild(wrap);
   });
 }
@@ -132,13 +202,19 @@ createModelInputs();
 function login(){
   const empId = document.getElementById('empId').value.trim();
   const password = document.getElementById('password').value.trim();
-  if(!empId || !password){ showMsg('Enter Emp Id and password','error'); return; }
+
+  if(!empId || !password){
+    showMsg('Enter Emp Id and password','error');
+    return;
+  }
 
   showMsg('Checking login...');
   const cb = 'jsonpLoginCallback_' + Date.now();
+
   window[cb] = function(json){
     try{
       if(!json.success) throw new Error(json.message || 'Login failed');
+
       currentRSO = json.profile || {};
       subDealers = json.subDealers || [];
       filteredSubDealers = [...subDealers];
@@ -154,30 +230,38 @@ function login(){
 
       document.getElementById('loginSection').classList.add('hidden');
       document.getElementById('profileSection').classList.remove('hidden');
-      document.getElementById('entrySection').classList.remove('hidden');
+      document.getElementById('mainTabsSection').classList.remove('hidden');
+
       renderSubDealerDropdown(filteredSubDealers);
+      switchTab('sales');
       showMsg('Login successful');
-    }catch(err){
+    } catch(err){
       showMsg(err.message, 'error');
-    }finally{
+    } finally {
       delete window[cb];
-      s.remove();
+      if (scriptTag && scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
     }
   };
 
-  const s = document.createElement('script');
-  s.src = APPS_SCRIPT_URL + '?action=login&empId=' + encodeURIComponent(empId) + '&password=' + encodeURIComponent(password) + '&callback=' + cb;
-  s.onerror = function(){
-    showMsg('Login request failed. Check Apps Script deployment access.', 'error');
+  const scriptTag = document.createElement('script');
+  scriptTag.src = APPS_SCRIPT_URL
+    + '?action=login'
+    + '&empId=' + encodeURIComponent(empId)
+    + '&password=' + encodeURIComponent(password)
+    + '&callback=' + cb;
+
+  scriptTag.onerror = function(){
+    showMsg('Login request failed. Check Apps Script deployment access or deployment code.', 'error');
     delete window[cb];
-    s.remove();
+    if (scriptTag.parentNode) scriptTag.parentNode.removeChild(scriptTag);
   };
-  document.body.appendChild(s);
+
+  document.body.appendChild(scriptTag);
 }
 
 function renderSubDealerDropdown(list){
   const dd = document.getElementById('subDealerDropdown');
-  dd.innerHTML = '<option value=\"\">Select Sub Dealer</option>';
+  dd.innerHTML = '<option value="">Select Sub Dealer</option>';
   list.forEach((item, idx) => {
     const opt = document.createElement('option');
     opt.value = idx;
@@ -194,13 +278,25 @@ function filterSubDealers(){
 }
 
 function clearDealerDetails(){
-  ['subDealerCode','storeId','dealerCity','areaMarket','subDealerCategory','annualPotential','annualSaleUpdated','storeDisplayUpdated','daikinDisplayUpdated'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('subDealerCode').value = '';
+  document.getElementById('storeId').value = '';
+  document.getElementById('dealerCity').value = '';
+  document.getElementById('areaMarket').value = '';
+  document.getElementById('subDealerCategory').value = '';
+  document.getElementById('annualPotential').value = '';
+  document.getElementById('annualSaleUpdated').value = '';
+  document.getElementById('storeDisplayUpdated').value = '';
+  document.getElementById('daikinDisplayUpdated').value = '';
   MODEL_COLUMNS.forEach(m => document.getElementById('model_' + m).value = '');
 }
 
 function loadDealerDetails(){
   const idx = document.getElementById('subDealerDropdown').value;
-  if(idx === '') return clearDealerDetails();
+  if(idx === ''){
+    clearDealerDetails();
+    return;
+  }
+
   const d = filteredSubDealers[Number(idx)];
   document.getElementById('subDealerCode').value = d.subDealerCode || '';
   document.getElementById('storeId').value = d.storeId || '';
@@ -208,18 +304,32 @@ function loadDealerDetails(){
   document.getElementById('areaMarket').value = d.areaMarket || '';
   document.getElementById('subDealerCategory').value = d.subDealerCategory || '';
   document.getElementById('annualPotential').value = d.annualPotential || '';
+  document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = d.storeTotalDisplay || '';
   document.getElementById('daikinDisplayUpdated').value = d.daikinDisplay || '';
+  MODEL_COLUMNS.forEach(m => document.getElementById('model_' + m).value = '');
 }
 
 function submitSales(){
-  if(!currentRSO) return showMsg('Please login first', 'error');
+  if(!currentRSO){
+    showMsg('Please login first', 'error');
+    return;
+  }
+
   const idx = document.getElementById('subDealerDropdown').value;
-  if(idx === '') return showMsg('Please select Sub Dealer', 'error');
+  if(idx === ''){
+    showMsg('Please select Sub Dealer', 'error');
+    return;
+  }
+
   const month = document.getElementById('month').value;
-  if(!month) return showMsg('Please select month', 'error');
+  if(!month){
+    showMsg('Please select month', 'error');
+    return;
+  }
 
   const dealer = filteredSubDealers[Number(idx)];
+
   document.getElementById('f_month').value = month;
   document.getElementById('f_branch').value = currentRSO.branch || '';
   document.getElementById('f_agencyCode').value = currentRSO.agencyCode || '';
@@ -239,19 +349,47 @@ function submitSales(){
   document.getElementById('f_storeDisplayUpdated').value = document.getElementById('storeDisplayUpdated').value || '';
   document.getElementById('f_daikinDisplayUpdated').value = document.getElementById('daikinDisplayUpdated').value || '';
 
-  const hiddenBox = document.getElementById('hiddenModelFields');
-  hiddenBox.innerHTML = '';
+  const hiddenModelFields = document.getElementById('hiddenModelFields');
+  hiddenModelFields.innerHTML = '';
+
   MODEL_COLUMNS.forEach(m => {
-    const input = document.createElement('input');
-    input.type = 'hidden';
-    input.name = m;
-    input.value = document.getElementById('model_' + m).value || 0;
-    hiddenBox.appendChild(input);
+    const inp = document.createElement('input');
+    inp.type = 'hidden';
+    inp.name = m;
+    inp.value = document.getElementById('model_' + m).value || 0;
+    hiddenModelFields.appendChild(inp);
   });
 
-  showMsg('Submitting monthly sales...');
+  showMsg('Submission sent successfully. Please check Google Sheet.', 'ok');
   document.getElementById('submitForm').submit();
-  showMsg('Submission sent. Please check RSO_Monthly_Sales sheet.', 'ok');
+}
+
+function submitNewDealer(){
+  if(!currentRSO){
+    showMsg('Please login first', 'error');
+    return;
+  }
+
+  const name = document.getElementById('newSubDealerName').value.trim();
+  const city = document.getElementById('newCity').value.trim();
+  const area = document.getElementById('newAreaMarket').value.trim();
+  const cat = document.getElementById('newSubDealerCategory').value.trim();
+  const potential = document.getElementById('newAnnualPotential').value.trim();
+
+  if(!name || !city || !area || !cat){
+    showMsg('Please fill all new sub dealer details', 'error');
+    return;
+  }
+
+  document.getElementById('add_empId').value = currentRSO.empId || '';
+  document.getElementById('add_subDealerName').value = name;
+  document.getElementById('add_city').value = city;
+  document.getElementById('add_areaMarket').value = area;
+  document.getElementById('add_subDealerCategory').value = cat;
+  document.getElementById('add_annualPotential').value = potential;
+
+  showMsg('New sub dealer submission sent. It will be added in RSO Market Master.', 'ok');
+  document.getElementById('addDealerForm').submit();
 }
 </script>
 </body>

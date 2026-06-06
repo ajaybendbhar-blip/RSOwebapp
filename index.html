@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>RSO Monthly Sales App</title>
+  <title>Daikin RSO Sales App</title>
   <style>
     body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#1f2937}
     .wrap{max-width:1180px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
@@ -92,16 +92,17 @@
         <input id="ownerNameView" placeholder="Owner Name" readonly>
 
         <input id="ownerWhatsappView" placeholder="Owner Whatsapp No." readonly>
+        <input id="dealerPincode" placeholder="Dealer Pincode *" maxlength="6" inputmode="numeric">
         <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
-        <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
 
+        <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
         <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
       </div>
 
       <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
       <div id="modelsBox" class="models"></div>
 
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyiuPb7z2r3_vn3TtIeXn_jqNuzX0iagN-B9eBVLYpQteU51dVrLFGTZYEvpoVC80ow/exec">
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyG9WqsczjTD67zYBQhwcxI_pYXsb8vQVP9MdBmw7f6upUY6um660ZqX3CrFw1X9nbC/exec">
         <input type="hidden" name="action" value="submitSales">
         <input type="hidden" name="month" id="f_month">
         <input type="hidden" name="branch" id="f_branch">
@@ -116,6 +117,7 @@
         <input type="hidden" name="subDealerName" id="f_subDealerName">
         <input type="hidden" name="ownerName" id="f_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
+        <input type="hidden" name="dealerPincode" id="f_dealerPincode">
         <input type="hidden" name="city" id="f_city">
         <input type="hidden" name="areaMarket" id="f_areaMarket">
         <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
@@ -139,9 +141,10 @@
         <input id="newSubDealerName" placeholder="SubDealer Name *">
         <input id="newOwnerName" placeholder="Owner Name *">
         <input id="newOwnerWhatsapp" placeholder="Owner Whatsapp No. *">
+        <input id="newDealerPincode" placeholder="Dealer Pincode *" maxlength="6" inputmode="numeric">
         <input id="newCity" placeholder="City *">
-        <input id="newAreaMarket" placeholder="Area / Market *">
 
+        <input id="newAreaMarket" placeholder="Area / Market *">
         <select id="newSubDealerCategory">
           <option value="">Select Category *</option>
           <option value="AC">AC</option>
@@ -152,13 +155,14 @@
         <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
       </div>
 
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyiuPb7z2r3_vn3TtIeXn_jqNuzX0iagN-B9eBVLYpQteU51dVrLFGTZYEvpoVC80ow/exec">
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyG9WqsczjTD67zYBQhwcxI_pYXsb8vQVP9MdBmw7f6upUY6um660ZqX3CrFw1X9nbC/exec">
         <input type="hidden" name="action" value="addDealer">
         <input type="hidden" name="empId" id="add_empId">
         <input type="hidden" name="subDealerCode" id="add_subDealerCode">
         <input type="hidden" name="subDealerName" id="add_subDealerName">
         <input type="hidden" name="ownerName" id="add_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
+        <input type="hidden" name="dealerPincode" id="add_dealerPincode">
         <input type="hidden" name="city" id="add_city">
         <input type="hidden" name="areaMarket" id="add_areaMarket">
         <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
@@ -177,11 +181,12 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyiuPb7z2r3_vn3TtIeXn_jqNuzX0iagN-B9eBVLYpQteU51dVrLFGTZYEvpoVC80ow/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyG9WqsczjTD67zYBQhwcxI_pYXsb8vQVP9MdBmw7f6upUY6um660ZqX3CrFw1X9nbC/exec';
 const MODEL_COLUMNS = [
   "FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL35","FTKL50",
   "FTKC50","FTKM53","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"
 ];
+const PINCODE_REGEX = /^[1-9][0-9]{5}$/;
 
 let currentRSO = null;
 let subDealers = [];
@@ -306,6 +311,7 @@ function clearDealerDetails(){
   document.getElementById('annualPotential').value = '';
   document.getElementById('ownerNameView').value = '';
   document.getElementById('ownerWhatsappView').value = '';
+  document.getElementById('dealerPincode').value = '';
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = '';
   document.getElementById('daikinDisplayUpdated').value = '';
@@ -328,10 +334,15 @@ function loadDealerDetails(){
   document.getElementById('annualPotential').value = d.annualPotential || '';
   document.getElementById('ownerNameView').value = d.ownerName || '';
   document.getElementById('ownerWhatsappView').value = d.ownerWhatsapp || '';
+  document.getElementById('dealerPincode').value = d.dealerPincode || '';
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = d.storeTotalDisplay || '';
   document.getElementById('daikinDisplayUpdated').value = d.daikinDisplay || '';
   MODEL_COLUMNS.forEach(m => document.getElementById('model_' + m).value = '');
+}
+
+function isValidPincode(pin){
+  return PINCODE_REGEX.test((pin || '').trim());
 }
 
 function submitSales(){
@@ -352,6 +363,16 @@ function submitSales(){
     return;
   }
 
+  const dealerPincode = document.getElementById('dealerPincode').value.trim();
+  if(!dealerPincode){
+    showMsg('Dealer Pincode is mandatory', 'error');
+    return;
+  }
+  if(!isValidPincode(dealerPincode)){
+    showMsg('Dealer Pincode must be exactly 6 digits and should not start with 0', 'error');
+    return;
+  }
+
   const dealer = filteredSubDealers[Number(idx)];
 
   document.getElementById('f_month').value = month;
@@ -367,6 +388,7 @@ function submitSales(){
   document.getElementById('f_subDealerName').value = dealer.subDealerName || '';
   document.getElementById('f_ownerName').value = dealer.ownerName || '';
   document.getElementById('f_ownerWhatsapp').value = dealer.ownerWhatsapp || '';
+  document.getElementById('f_dealerPincode').value = dealerPincode;
   document.getElementById('f_city').value = dealer.city || '';
   document.getElementById('f_areaMarket').value = dealer.areaMarket || '';
   document.getElementById('f_subDealerCategory').value = dealer.subDealerCategory || '';
@@ -400,6 +422,7 @@ function submitNewDealer(){
   const name = document.getElementById('newSubDealerName').value.trim();
   const ownerName = document.getElementById('newOwnerName').value.trim();
   const ownerWhatsapp = document.getElementById('newOwnerWhatsapp').value.trim();
+  const dealerPincode = document.getElementById('newDealerPincode').value.trim();
   const city = document.getElementById('newCity').value.trim();
   const area = document.getElementById('newAreaMarket').value.trim();
   const cat = document.getElementById('newSubDealerCategory').value.trim();
@@ -407,8 +430,13 @@ function submitNewDealer(){
   const storeTotalDisplay = document.getElementById('newStoreTotalDisplay').value.trim();
   const daikinDisplay = document.getElementById('newDaikinDisplay').value.trim();
 
-  if(!name || !ownerName || !ownerWhatsapp || !city || !area || !cat || !potential || !storeTotalDisplay || !daikinDisplay){
+  if(!name || !ownerName || !ownerWhatsapp || !dealerPincode || !city || !area || !cat || !potential || !storeTotalDisplay || !daikinDisplay){
     showMsg('Please fill all mandatory new sub dealer details', 'error');
+    return;
+  }
+
+  if(!isValidPincode(dealerPincode)){
+    showMsg('Dealer Pincode must be exactly 6 digits and should not start with 0', 'error');
     return;
   }
 
@@ -417,6 +445,7 @@ function submitNewDealer(){
   document.getElementById('add_subDealerName').value = name;
   document.getElementById('add_ownerName').value = ownerName;
   document.getElementById('add_ownerWhatsapp').value = ownerWhatsapp;
+  document.getElementById('add_dealerPincode').value = dealerPincode;
   document.getElementById('add_city').value = city;
   document.getElementById('add_areaMarket').value = area;
   document.getElementById('add_subDealerCategory').value = cat;

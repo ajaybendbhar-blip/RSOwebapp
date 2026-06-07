@@ -102,7 +102,7 @@
       <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
       <div id="modelsBox" class="models"></div>
 
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec">
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycby5-WVcCN9JlUdOIz2TQNwWyjhreSFBmXBQXFD2QJMmWepgOzqDxcujppqymJvmjE62/exec">
         <input type="hidden" name="action" value="submitSales">
         <input type="hidden" name="month" id="f_month">
         <input type="hidden" name="branch" id="f_branch">
@@ -160,7 +160,7 @@
         <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
       </div>
 
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec">
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycby5-WVcCN9JlUdOIz2TQNwWyjhreSFBmXBQXFD2QJMmWepgOzqDxcujppqymJvmjE62/exec">
         <input type="hidden" name="action" value="addDealer">
         <input type="hidden" name="empId" id="add_empId">
         <input type="hidden" name="subDealerCode" id="add_subDealerCode">
@@ -191,7 +191,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycby5-WVcCN9JlUdOIz2TQNwWyjhreSFBmXBQXFD2QJMmWepgOzqDxcujppqymJvmjE62/exec';
 const MODEL_COLUMNS = [
   "FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL35","FTKL50",
   "FTKC50","FTKM53","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"
@@ -356,27 +356,38 @@ function isValidPincode(pin){
 }
 
 async function reverseGeocode(lat, lon) {
-  const url = new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');
-  url.searchParams.set('latitude', lat);
-  url.searchParams.set('longitude', lon);
-  url.searchParams.set('localityLanguage', 'en');
+  try {
+    const url = new URL('https://api.bigdatacloud.net/data/reverse-geocode-client');
+    url.searchParams.set('latitude', lat);
+    url.searchParams.set('longitude', lon);
+    url.searchParams.set('localityLanguage', 'en');
 
-  const response = await fetch(url.toString(), { method: 'GET' });
-  if (!response.ok) throw new Error('Reverse geocoding failed');
+    const response = await fetch(url.toString(), { method: 'GET' });
+    if (!response.ok) throw new Error('Reverse geocoding failed');
 
-  const data = await response.json();
-  const autoDetectedPincode = (data.postcode || '').trim();
+    const data = await response.json();
+    console.log('Reverse geocode response:', data);
 
-  const addressParts = [
-    data.locality,
-    data.city || data.principalSubdivision,
-    data.countryName
-  ].filter(Boolean);
+    const autoDetectedPincode =
+      (data.postcode || data.postalCode || '').toString().trim();
 
-  return {
-    capturedAddress: addressParts.join(', ') || 'GPS captured',
-    autoDetectedPincode: autoDetectedPincode
-  };
+    const addressParts = [
+      data.locality || '',
+      data.city || data.principalSubdivision || '',
+      data.countryName || ''
+    ].filter(Boolean);
+
+    return {
+      capturedAddress: addressParts.join(', ') || 'GPS captured',
+      autoDetectedPincode: autoDetectedPincode
+    };
+  } catch (e) {
+    console.error('reverseGeocode error:', e);
+    return {
+      capturedAddress: 'GPS captured',
+      autoDetectedPincode: ''
+    };
+  }
 }
 
 async function getCurrentLocationData() {
@@ -403,7 +414,7 @@ async function getCurrentLocationData() {
           dealerLongitude: lon,
           capturedAddress: geoInfo.capturedAddress || 'GPS captured',
           autoDetectedPincode: geoInfo.autoDetectedPincode || '',
-          locationSource: 'AUTO_GPS_REVERSE_GEOCODE'
+          locationSource: geoInfo.autoDetectedPincode ? 'AUTO_GPS_REVERSE_GEOCODE_WITH_PINCODE' : 'AUTO_GPS_REVERSE_GEOCODE_NO_PINCODE'
         });
       } catch (e) {
         resolve({

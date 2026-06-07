@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daikin RSO Sales App</title>
+  <title> Daikin RSO Sales App</title>
   <style>
     body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#1f2937}
     .wrap{max-width:1180px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
@@ -102,7 +102,7 @@
       <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
       <div id="modelsBox" class="models"></div>
 
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyxH8293RnW3hFQRNc6ozGW0vKBeDIJaNkGUvYxuH8EW3rfphJzcCzYUfwGS1udjrdi/exec">
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec">
         <input type="hidden" name="action" value="submitSales">
         <input type="hidden" name="month" id="f_month">
         <input type="hidden" name="branch" id="f_branch">
@@ -118,6 +118,10 @@
         <input type="hidden" name="ownerName" id="f_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
         <input type="hidden" name="dealerPincode" id="f_dealerPincode">
+        <input type="hidden" name="dealerLatitude" id="f_dealerLatitude">
+        <input type="hidden" name="dealerLongitude" id="f_dealerLongitude">
+        <input type="hidden" name="capturedAddress" id="f_capturedAddress">
+        <input type="hidden" name="locationSource" id="f_locationSource">
         <input type="hidden" name="city" id="f_city">
         <input type="hidden" name="areaMarket" id="f_areaMarket">
         <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
@@ -155,7 +159,7 @@
         <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
       </div>
 
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyCzjVY38x15_c6mtY22xJulJCHLupfs_UD7XADTHIfwF985ltYGUjSWmveplNuHF7W/exec">
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec">
         <input type="hidden" name="action" value="addDealer">
         <input type="hidden" name="empId" id="add_empId">
         <input type="hidden" name="subDealerCode" id="add_subDealerCode">
@@ -163,6 +167,10 @@
         <input type="hidden" name="ownerName" id="add_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
         <input type="hidden" name="dealerPincode" id="add_dealerPincode">
+        <input type="hidden" name="dealerLatitude" id="add_dealerLatitude">
+        <input type="hidden" name="dealerLongitude" id="add_dealerLongitude">
+        <input type="hidden" name="capturedAddress" id="add_capturedAddress">
+        <input type="hidden" name="locationSource" id="add_locationSource">
         <input type="hidden" name="city" id="add_city">
         <input type="hidden" name="areaMarket" id="add_areaMarket">
         <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
@@ -181,7 +189,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyCzjVY38x15_c6mtY22xJulJCHLupfs_UD7XADTHIfwF985ltYGUjSWmveplNuHF7W/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec';
 const MODEL_COLUMNS = [
   "FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL35","FTKL50",
   "FTKC50","FTKM53","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"
@@ -345,7 +353,41 @@ function isValidPincode(pin){
   return PINCODE_REGEX.test((pin || '').trim());
 }
 
-function submitSales(){
+function getCurrentLocationData() {
+  return new Promise(function(resolve) {
+    if (!navigator.geolocation) {
+      resolve({
+        dealerLatitude: '',
+        dealerLongitude: '',
+        capturedAddress: '',
+        locationSource: 'NOT_SUPPORTED'
+      });
+      return;
+    }
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      resolve({
+        dealerLatitude: pos.coords.latitude.toFixed(6),
+        dealerLongitude: pos.coords.longitude.toFixed(6),
+        capturedAddress: 'GPS captured',
+        locationSource: 'AUTO_GPS'
+      });
+    }, function() {
+      resolve({
+        dealerLatitude: '',
+        dealerLongitude: '',
+        capturedAddress: '',
+        locationSource: 'DENIED_OR_UNAVAILABLE'
+      });
+    }, {
+      enableHighAccuracy: true,
+      timeout: 10000,
+      maximumAge: 0
+    });
+  });
+}
+
+async function submitSales(){
   if(!currentRSO){
     showMsg('Please login first', 'error');
     return;
@@ -373,6 +415,8 @@ function submitSales(){
     return;
   }
 
+  showMsg('Capturing location and submitting...');
+  const geo = await getCurrentLocationData();
   const dealer = filteredSubDealers[Number(idx)];
 
   document.getElementById('f_month').value = month;
@@ -389,6 +433,10 @@ function submitSales(){
   document.getElementById('f_ownerName').value = dealer.ownerName || '';
   document.getElementById('f_ownerWhatsapp').value = dealer.ownerWhatsapp || '';
   document.getElementById('f_dealerPincode').value = dealerPincode;
+  document.getElementById('f_dealerLatitude').value = geo.dealerLatitude;
+  document.getElementById('f_dealerLongitude').value = geo.dealerLongitude;
+  document.getElementById('f_capturedAddress').value = geo.capturedAddress;
+  document.getElementById('f_locationSource').value = geo.locationSource;
   document.getElementById('f_city').value = dealer.city || '';
   document.getElementById('f_areaMarket').value = dealer.areaMarket || '';
   document.getElementById('f_subDealerCategory').value = dealer.subDealerCategory || '';
@@ -412,7 +460,7 @@ function submitSales(){
   document.getElementById('submitForm').submit();
 }
 
-function submitNewDealer(){
+async function submitNewDealer(){
   if(!currentRSO){
     showMsg('Please login first', 'error');
     return;
@@ -440,12 +488,19 @@ function submitNewDealer(){
     return;
   }
 
+  showMsg('Capturing location and saving new dealer...');
+  const geo = await getCurrentLocationData();
+
   document.getElementById('add_empId').value = currentRSO.empId || '';
   document.getElementById('add_subDealerCode').value = subDealerCode;
   document.getElementById('add_subDealerName').value = name;
   document.getElementById('add_ownerName').value = ownerName;
   document.getElementById('add_ownerWhatsapp').value = ownerWhatsapp;
   document.getElementById('add_dealerPincode').value = dealerPincode;
+  document.getElementById('add_dealerLatitude').value = geo.dealerLatitude;
+  document.getElementById('add_dealerLongitude').value = geo.dealerLongitude;
+  document.getElementById('add_capturedAddress').value = geo.capturedAddress;
+  document.getElementById('add_locationSource').value = geo.locationSource;
   document.getElementById('add_city').value = city;
   document.getElementById('add_areaMarket').value = area;
   document.getElementById('add_subDealerCategory').value = cat;

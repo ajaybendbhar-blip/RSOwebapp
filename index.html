@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Daikin RSO Performance Tracking</title>
+  <title>RSO Monthly Sales App</title>
   <style>
     body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#1f2937}
     .wrap{max-width:1180px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
@@ -36,7 +36,7 @@
 <body>
 <div class="wrap">
   <div class="title-line">
-    <h1>RSO Performance Tracking App</h1>
+    <h1>RSO Monthly Sales App</h1>
     <div class="pill">Daikin RSO Reporting</div>
   </div>
 
@@ -102,7 +102,7 @@
       <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
       <div id="modelsBox" class="models"></div>
 
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec">
+      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec">
         <input type="hidden" name="action" value="submitSales">
         <input type="hidden" name="month" id="f_month">
         <input type="hidden" name="branch" id="f_branch">
@@ -118,6 +118,7 @@
         <input type="hidden" name="ownerName" id="f_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
         <input type="hidden" name="dealerPincode" id="f_dealerPincode">
+        <input type="hidden" name="autoDetectedPincode" id="f_autoDetectedPincode">
         <input type="hidden" name="dealerLatitude" id="f_dealerLatitude">
         <input type="hidden" name="dealerLongitude" id="f_dealerLongitude">
         <input type="hidden" name="capturedAddress" id="f_capturedAddress">
@@ -159,7 +160,7 @@
         <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
       </div>
 
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec">
+      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec">
         <input type="hidden" name="action" value="addDealer">
         <input type="hidden" name="empId" id="add_empId">
         <input type="hidden" name="subDealerCode" id="add_subDealerCode">
@@ -167,6 +168,7 @@
         <input type="hidden" name="ownerName" id="add_ownerName">
         <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
         <input type="hidden" name="dealerPincode" id="add_dealerPincode">
+        <input type="hidden" name="autoDetectedPincode" id="add_autoDetectedPincode">
         <input type="hidden" name="dealerLatitude" id="add_dealerLatitude">
         <input type="hidden" name="dealerLongitude" id="add_dealerLongitude">
         <input type="hidden" name="capturedAddress" id="add_capturedAddress">
@@ -189,7 +191,7 @@
 </div>
 
 <script>
-const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaYIlOAz_N7rE53wYJgKinHVb15wgIfN_8lBO298NByXfPyn6swUcsxa5XuD1kxUqu/exec';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwu99kSYf-yrr_n6VHiAYR8tuEg1A6YRjRR77b1ePNFF1LPAB7PAuTIn50-aZgVibZN/exec';
 const MODEL_COLUMNS = [
   "FTL30","FTL50","FTE60","FTKC35","FTKC48","FTKL35","FTKL50",
   "FTKC50","FTKM53","FTKL60","FTKU35","FTKU50","FTKM50","FTKL71","FTKL90"
@@ -360,22 +362,20 @@ async function reverseGeocode(lat, lon) {
   url.searchParams.set('localityLanguage', 'en');
 
   const response = await fetch(url.toString(), { method: 'GET' });
-  if (!response.ok) {
-    throw new Error('Reverse geocoding failed');
-  }
+  if (!response.ok) throw new Error('Reverse geocoding failed');
 
   const data = await response.json();
+  const autoDetectedPincode = (data.postcode || '').trim();
 
   const addressParts = [
     data.locality,
     data.city || data.principalSubdivision,
-    data.postcode,
     data.countryName
   ].filter(Boolean);
 
   return {
     capturedAddress: addressParts.join(', ') || 'GPS captured',
-    detectedPincode: data.postcode || ''
+    autoDetectedPincode: autoDetectedPincode
   };
 }
 
@@ -386,7 +386,7 @@ async function getCurrentLocationData() {
         dealerLatitude: '',
         dealerLongitude: '',
         capturedAddress: '',
-        detectedPincode: '',
+        autoDetectedPincode: '',
         locationSource: 'NOT_SUPPORTED'
       });
       return;
@@ -402,7 +402,7 @@ async function getCurrentLocationData() {
           dealerLatitude: lat,
           dealerLongitude: lon,
           capturedAddress: geoInfo.capturedAddress || 'GPS captured',
-          detectedPincode: geoInfo.detectedPincode || '',
+          autoDetectedPincode: geoInfo.autoDetectedPincode || '',
           locationSource: 'AUTO_GPS_REVERSE_GEOCODE'
         });
       } catch (e) {
@@ -410,7 +410,7 @@ async function getCurrentLocationData() {
           dealerLatitude: lat,
           dealerLongitude: lon,
           capturedAddress: 'GPS captured',
-          detectedPincode: '',
+          autoDetectedPincode: '',
           locationSource: 'AUTO_GPS'
         });
       }
@@ -424,7 +424,7 @@ async function getCurrentLocationData() {
         dealerLatitude: '',
         dealerLongitude: '',
         capturedAddress: err && err.message ? err.message : '',
-        detectedPincode: '',
+        autoDetectedPincode: '',
         locationSource: source
       });
     }, {
@@ -453,16 +453,7 @@ async function submitSales(){
     return;
   }
 
-  showMsg('Capturing GPS and address...');
-  const geo = await getCurrentLocationData();
-  const dealer = filteredSubDealers[Number(idx)];
-
-  let enteredPincode = document.getElementById('dealerPincode').value.trim();
-  if(!enteredPincode && geo.detectedPincode){
-    document.getElementById('dealerPincode').value = geo.detectedPincode;
-    enteredPincode = geo.detectedPincode;
-  }
-
+  const enteredPincode = document.getElementById('dealerPincode').value.trim();
   if(!enteredPincode){
     showMsg('Dealer Pincode is mandatory', 'error');
     return;
@@ -471,6 +462,10 @@ async function submitSales(){
     showMsg('Dealer Pincode must be exactly 6 digits and should not start with 0', 'error');
     return;
   }
+
+  showMsg('Capturing GPS and address...');
+  const geo = await getCurrentLocationData();
+  const dealer = filteredSubDealers[Number(idx)];
 
   document.getElementById('f_month').value = month;
   document.getElementById('f_branch').value = currentRSO.branch || '';
@@ -486,6 +481,7 @@ async function submitSales(){
   document.getElementById('f_ownerName').value = dealer.ownerName || '';
   document.getElementById('f_ownerWhatsapp').value = dealer.ownerWhatsapp || '';
   document.getElementById('f_dealerPincode').value = enteredPincode;
+  document.getElementById('f_autoDetectedPincode').value = geo.autoDetectedPincode || '';
   document.getElementById('f_dealerLatitude').value = geo.dealerLatitude;
   document.getElementById('f_dealerLongitude').value = geo.dealerLongitude;
   document.getElementById('f_capturedAddress').value = geo.capturedAddress;
@@ -523,6 +519,7 @@ async function submitNewDealer(){
   const name = document.getElementById('newSubDealerName').value.trim();
   const ownerName = document.getElementById('newOwnerName').value.trim();
   const ownerWhatsapp = document.getElementById('newOwnerWhatsapp').value.trim();
+  const dealerPincode = document.getElementById('newDealerPincode').value.trim();
   const city = document.getElementById('newCity').value.trim();
   const area = document.getElementById('newAreaMarket').value.trim();
   const cat = document.getElementById('newSubDealerCategory').value.trim();
@@ -530,35 +527,26 @@ async function submitNewDealer(){
   const storeTotalDisplay = document.getElementById('newStoreTotalDisplay').value.trim();
   const daikinDisplay = document.getElementById('newDaikinDisplay').value.trim();
 
-  if(!name || !ownerName || !ownerWhatsapp || !city || !area || !cat || !potential || !storeTotalDisplay || !daikinDisplay){
+  if(!name || !ownerName || !ownerWhatsapp || !dealerPincode || !city || !area || !cat || !potential || !storeTotalDisplay || !daikinDisplay){
     showMsg('Please fill all mandatory new sub dealer details', 'error');
+    return;
+  }
+
+  if(!isValidPincode(dealerPincode)){
+    showMsg('Dealer Pincode must be exactly 6 digits and should not start with 0', 'error');
     return;
   }
 
   showMsg('Capturing GPS and address for new dealer...');
   const geo = await getCurrentLocationData();
 
-  let enteredPincode = document.getElementById('newDealerPincode').value.trim();
-  if(!enteredPincode && geo.detectedPincode){
-    document.getElementById('newDealerPincode').value = geo.detectedPincode;
-    enteredPincode = geo.detectedPincode;
-  }
-
-  if(!enteredPincode){
-    showMsg('Dealer Pincode is mandatory', 'error');
-    return;
-  }
-  if(!isValidPincode(enteredPincode)){
-    showMsg('Dealer Pincode must be exactly 6 digits and should not start with 0', 'error');
-    return;
-  }
-
   document.getElementById('add_empId').value = currentRSO.empId || '';
   document.getElementById('add_subDealerCode').value = subDealerCode;
   document.getElementById('add_subDealerName').value = name;
   document.getElementById('add_ownerName').value = ownerName;
   document.getElementById('add_ownerWhatsapp').value = ownerWhatsapp;
-  document.getElementById('add_dealerPincode').value = enteredPincode;
+  document.getElementById('add_dealerPincode').value = dealerPincode;
+  document.getElementById('add_autoDetectedPincode').value = geo.autoDetectedPincode || '';
   document.getElementById('add_dealerLatitude').value = geo.dealerLatitude;
   document.getElementById('add_dealerLongitude').value = geo.dealerLongitude;
   document.getElementById('add_capturedAddress').value = geo.capturedAddress;

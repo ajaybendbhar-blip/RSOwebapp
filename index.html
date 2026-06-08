@@ -11,8 +11,9 @@
     .section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
     .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
     .models{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    input,select,button{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;font-size:14px}
-    input[readonly]{background:#f8fafc}
+    input,select,button,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;font-size:14px}
+    input[readonly],textarea[readonly]{background:#f8fafc}
+    textarea{min-height:84px;resize:vertical}
     button{background:#0f766e;color:#fff;border:none;font-weight:700;cursor:pointer}
     button:hover{background:#0d655e}
     .msg{display:none;padding:12px;border-radius:10px;margin-bottom:12px;white-space:pre-wrap}
@@ -29,6 +30,7 @@
     .pill{padding:6px 10px;border-radius:999px;background:#ecfeff;color:#0f766e;font-size:12px;font-weight:700}
     iframe{display:none}
     .full{grid-column:1 / -1}
+    .gps-box{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:12px}
     @media(max-width:900px){.grid,.models{grid-template-columns:1fr 1fr}}
     @media(max-width:600px){.grid,.models{grid-template-columns:1fr}}
   </style>
@@ -97,7 +99,11 @@
 
         <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
         <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
+
+        <textarea id="liveCapturedAddressSales" class="full" placeholder="Live GPS Address" readonly></textarea>
       </div>
+
+      <div class="gps-box small" id="gpsStatusSales">GPS not captured yet.</div>
 
       <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
       <div id="modelsBox" class="models"></div>
@@ -158,7 +164,11 @@
         <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC *">
         <input id="newStoreTotalDisplay" type="number" min="0" placeholder="Store Total Display *">
         <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
+
+        <textarea id="liveCapturedAddressDealer" class="full" placeholder="Live GPS Address" readonly></textarea>
       </div>
+
+      <div class="gps-box small" id="gpsStatusDealer">GPS not captured yet.</div>
 
       <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbwfQRmuKh-D-W_-eRWlwZzEc94TuPIFX8cLkZDW14Kc-Q8oDEOBqho-5AFox7E8Jy_l/exec">
         <input type="hidden" name="action" value="addDealer">
@@ -325,6 +335,8 @@ function clearDealerDetails(){
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = '';
   document.getElementById('daikinDisplayUpdated').value = '';
+  document.getElementById('liveCapturedAddressSales').value = '';
+  document.getElementById('gpsStatusSales').textContent = 'GPS not captured yet.';
   MODEL_COLUMNS.forEach(m => document.getElementById('model_' + m).value = '');
 }
 
@@ -348,11 +360,39 @@ function loadDealerDetails(){
   document.getElementById('annualSaleUpdated').value = '';
   document.getElementById('storeDisplayUpdated').value = d.storeTotalDisplay || '';
   document.getElementById('daikinDisplayUpdated').value = d.daikinDisplay || '';
+  document.getElementById('liveCapturedAddressSales').value = '';
+  document.getElementById('gpsStatusSales').textContent = 'GPS not captured yet.';
   MODEL_COLUMNS.forEach(m => document.getElementById('model_' + m).value = '');
 }
 
 function isValidPincode(pin){
   return PINCODE_REGEX.test((pin || '').trim());
+}
+
+function buildAddressFromBDC(data, lat, lon){
+  const parts = [];
+  const seen = new Set();
+
+  [
+    data.locality,
+    data.city,
+    data.principalSubdivision,
+    data.countryName
+  ].forEach(v => {
+    const val = (v || '').toString().trim();
+    if(val && !seen.has(val.toLowerCase())){
+      seen.add(val.toLowerCase());
+      parts.push(val);
+    }
+  });
+
+  if(parts.length) return parts.join(', ');
+
+  const admin = data?.localityInfo?.administrative || [];
+  const adminParts = admin.map(x => (x.name || '').toString().trim()).filter(Boolean);
+  if(adminParts.length) return adminParts.join(', ');
+
+  return 'Lat: ' + lat + ', Lon: ' + lon;
 }
 
 async function reverseGeocodeLight(lat, lon) {
@@ -363,26 +403,22 @@ async function reverseGeocodeLight(lat, lon) {
     url.searchParams.set('localityLanguage', 'en');
 
     const response = await fetch(url.toString(), { method: 'GET' });
-    if (!response.ok) throw new Error('Reverse geocoding failed');
+    if (!response.ok) throw new Error('Reverse geocoding failed with status ' + response.status);
 
     const data = await response.json();
-    console.log('Light reverse geocode response:', data);
+    console.log('Reverse geocode response:', data);
 
-    const autoDetectedPincode = (data.postcode || data.postalCode || '').toString().trim();
-    const addressParts = [
-      data.locality || '',
-      data.city || data.principalSubdivision || '',
-      data.countryName || ''
-    ].filter(Boolean);
+    const autoDetectedPincode = ((data.postcode || data.postalCode || '') + '').trim();
+    const capturedAddress = buildAddressFromBDC(data, lat, lon);
 
     return {
-      capturedAddress: addressParts.join(', ') || 'GPS captured',
-      autoDetectedPincode: autoDetectedPincode
+      capturedAddress,
+      autoDetectedPincode
     };
   } catch (e) {
     console.error('reverseGeocodeLight error:', e);
     return {
-      capturedAddress: 'GPS captured',
+      capturedAddress: 'Lat: ' + lat + ', Lon: ' + lon,
       autoDetectedPincode: ''
     };
   }
@@ -410,7 +446,7 @@ async function getCurrentLocationData() {
         resolve({
           dealerLatitude: lat,
           dealerLongitude: lon,
-          capturedAddress: geoInfo.capturedAddress || 'GPS captured',
+          capturedAddress: geoInfo.capturedAddress || ('Lat: ' + lat + ', Lon: ' + lon),
           autoDetectedPincode: geoInfo.autoDetectedPincode || '',
           locationSource: geoInfo.autoDetectedPincode ? 'CLIENT_GPS_WITH_PINCODE' : 'CLIENT_GPS_NO_PINCODE'
         });
@@ -418,7 +454,7 @@ async function getCurrentLocationData() {
         resolve({
           dealerLatitude: lat,
           dealerLongitude: lon,
-          capturedAddress: 'GPS captured',
+          capturedAddress: 'Lat: ' + lat + ', Lon: ' + lon,
           autoDetectedPincode: '',
           locationSource: 'CLIENT_GPS_ONLY'
         });
@@ -475,6 +511,12 @@ async function submitSales(){
   showMsg('Capturing GPS and address...');
   const geo = await getCurrentLocationData();
   const dealer = filteredSubDealers[Number(idx)];
+
+  document.getElementById('liveCapturedAddressSales').value = geo.capturedAddress || '';
+  document.getElementById('gpsStatusSales').textContent =
+    geo.dealerLatitude && geo.dealerLongitude
+      ? 'GPS: ' + geo.dealerLatitude + ', ' + geo.dealerLongitude + ' | Source: ' + geo.locationSource + (geo.autoDetectedPincode ? ' | Auto PIN: ' + geo.autoDetectedPincode : '')
+      : 'GPS unavailable | Source: ' + geo.locationSource;
 
   document.getElementById('f_month').value = month;
   document.getElementById('f_branch').value = currentRSO.branch || '';
@@ -548,6 +590,12 @@ async function submitNewDealer(){
 
   showMsg('Capturing GPS and address for new dealer...');
   const geo = await getCurrentLocationData();
+
+  document.getElementById('liveCapturedAddressDealer').value = geo.capturedAddress || '';
+  document.getElementById('gpsStatusDealer').textContent =
+    geo.dealerLatitude && geo.dealerLongitude
+      ? 'GPS: ' + geo.dealerLatitude + ', ' + geo.dealerLongitude + ' | Source: ' + geo.locationSource + (geo.autoDetectedPincode ? ' | Auto PIN: ' + geo.autoDetectedPincode : '')
+      : 'GPS unavailable | Source: ' + geo.locationSource;
 
   document.getElementById('add_empId').value = currentRSO.empId || '';
   document.getElementById('add_subDealerCode').value = subDealerCode;

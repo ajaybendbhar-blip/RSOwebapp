@@ -4,201 +4,766 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>RSO Monthly Sales App</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    body{font-family:Arial,sans-serif;background:#f5f7fb;margin:0;padding:20px;color:#1f2937}
-    .wrap{max-width:1180px;margin:auto;background:#fff;padding:20px;border-radius:14px;box-shadow:0 3px 14px rgba(0,0,0,.08)}
-    h1,h2,h3{margin:0 0 12px;color:#0f4c5c}
-    .section{border:1px solid #e5e7eb;border-radius:12px;padding:16px;margin-bottom:16px}
-    .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
-    .models{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
-    input,select,button,textarea{width:100%;padding:12px;border:1px solid #cbd5e1;border-radius:10px;box-sizing:border-box;font-size:14px}
-    input[readonly],textarea[readonly]{background:#f8fafc}
-    textarea{min-height:84px;resize:vertical}
-    button{background:#0f766e;color:#fff;border:none;font-weight:700;cursor:pointer}
-    button:hover{background:#0d655e}
-    .msg{display:none;padding:12px;border-radius:10px;margin-bottom:12px;white-space:pre-wrap}
-    .ok{display:block;background:#ecfdf5;color:#166534}
-    .err{display:block;background:#fef2f2;color:#991b1b}
-    .hidden{display:none!important}
-    .small{font-size:12px;color:#6b7280}
-    .tabbar{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px}
-    .tab-btn{background:#e2e8f0;color:#0f172a;border:1px solid #cbd5e1;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;width:auto}
-    .tab-btn.active{background:#0f766e;color:#fff;border-color:#0f766e}
+    :root{
+      --bg:#f3f6fb;
+      --bg-accent:#eaf4f4;
+      --card:#ffffff;
+      --card-soft:#f8fbfd;
+      --text:#172033;
+      --muted:#667085;
+      --line:#dbe5ef;
+      --line-strong:#c7d4e2;
+      --primary:#0f766e;
+      --primary-dark:#0b5f59;
+      --primary-soft:#e6f7f4;
+      --danger:#b42318;
+      --danger-soft:#fef3f2;
+      --success:#027a48;
+      --success-soft:#ecfdf3;
+      --shadow:0 10px 30px rgba(16,24,40,.08);
+      --shadow-sm:0 6px 18px rgba(16,24,40,.05);
+      --radius:18px;
+      --radius-sm:12px;
+    }
+
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:'Inter',sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(circle at top left, #eef8f7 0, transparent 28%),
+        radial-gradient(circle at top right, #eef3ff 0, transparent 26%),
+        linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+      min-height:100vh;
+    }
+
+    .app-shell{
+      max-width:1320px;
+      margin:0 auto;
+      padding:28px 18px 60px;
+    }
+
+    .hero{
+      background:linear-gradient(135deg, #0f766e 0%, #155e75 55%, #1d4f91 100%);
+      color:#fff;
+      border-radius:28px;
+      padding:28px;
+      box-shadow:0 18px 50px rgba(15,118,110,.22);
+      margin-bottom:22px;
+      position:relative;
+      overflow:hidden;
+    }
+
+    .hero::after{
+      content:"";
+      position:absolute;
+      inset:auto -80px -80px auto;
+      width:240px;
+      height:240px;
+      border-radius:50%;
+      background:rgba(255,255,255,.08);
+      filter:blur(8px);
+    }
+
+    .hero-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:16px;
+      flex-wrap:wrap;
+      position:relative;
+      z-index:1;
+    }
+
+    .hero h1{
+      margin:0;
+      font-size:clamp(28px, 4vw, 40px);
+      line-height:1.1;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .hero p{
+      margin:10px 0 0;
+      max-width:720px;
+      color:rgba(255,255,255,.88);
+      font-size:15px;
+      line-height:1.6;
+    }
+
+    .hero-badge{
+      padding:10px 14px;
+      border-radius:999px;
+      background:rgba(255,255,255,.16);
+      color:#fff;
+      font-size:13px;
+      font-weight:700;
+      border:1px solid rgba(255,255,255,.18);
+      backdrop-filter:blur(8px);
+      white-space:nowrap;
+    }
+
+    .top-grid{
+      display:grid;
+      grid-template-columns:1fr;
+      gap:22px;
+      align-items:start;
+      margin-bottom:22px;
+    }
+
+    .card{
+      background:var(--card);
+      border:1px solid rgba(219,229,239,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-sm);
+    }
+
+    .card-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:20px 22px 0;
+      flex-wrap:wrap;
+    }
+
+    .card-title{
+      margin:0;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .card-sub{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .card-body{
+      padding:20px 22px 22px;
+    }
+
+    .login-card{
+      min-height:100%;
+    }
+
+    .login-note{
+      margin-top:12px;
+      font-size:13px;
+      color:var(--muted);
+    }
+
+    .msg{
+      display:none;
+      margin-bottom:18px;
+      padding:14px 16px;
+      border-radius:14px;
+      font-size:14px;
+      line-height:1.5;
+      border:1px solid transparent;
+      white-space:pre-wrap;
+      box-shadow:var(--shadow-sm);
+    }
+
+    .ok{
+      display:block;
+      background:var(--success-soft);
+      color:var(--success);
+      border-color:#abefc6;
+    }
+
+    .err{
+      display:block;
+      background:var(--danger-soft);
+      color:var(--danger);
+      border-color:#fecdca;
+    }
+
+    .hidden{display:none !important;}
+
+    .section{
+      background:var(--card);
+      border:1px solid rgba(219,229,239,.9);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow-sm);
+      margin-bottom:20px;
+      overflow:hidden;
+    }
+
+    .section-head{
+      padding:20px 22px 0;
+    }
+
+    .section h2{
+      margin:0;
+      font-size:20px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .section-desc{
+      color:var(--muted);
+      font-size:13px;
+      margin-top:4px;
+    }
+
+    .section-body{
+      padding:18px 22px 22px;
+    }
+
+    .tabbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:18px;
+      background:#f7fafc;
+      padding:8px;
+      border:1px solid var(--line);
+      border-radius:16px;
+    }
+
+    .tab-btn{
+      width:auto;
+      border:none;
+      background:transparent;
+      color:#475467;
+      padding:12px 16px;
+      border-radius:12px;
+      font-weight:700;
+      cursor:pointer;
+      transition:.2s ease;
+    }
+
+    .tab-btn:hover{
+      background:#eef4f8;
+      color:var(--text);
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(135deg, var(--primary), #0b5f59);
+      color:#fff;
+      box-shadow:0 8px 18px rgba(15,118,110,.22);
+    }
+
     .tab-panel{display:none}
     .tab-panel.active{display:block}
-    .title-line{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
-    .pill{padding:6px 10px;border-radius:999px;background:#ecfeff;color:#0f766e;font-size:12px;font-weight:700}
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(3, minmax(0,1fr));
+      gap:16px;
+    }
+
+    .field,
+    .textarea-field{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+
+    .field.full,
+    .textarea-field.full{
+      grid-column:1 / -1;
+    }
+
+    .label{
+      font-size:12px;
+      font-weight:700;
+      letter-spacing:.04em;
+      color:#475467;
+      text-transform:uppercase;
+    }
+
+    input,select,textarea,button{
+      font:inherit;
+    }
+
+    input,select,textarea{
+      width:100%;
+      border:1px solid var(--line);
+      border-radius:14px;
+      background:#fff;
+      padding:14px 15px;
+      color:var(--text);
+      outline:none;
+      transition:border-color .18s ease, box-shadow .18s ease, background .18s ease;
+      box-shadow:0 1px 2px rgba(16,24,40,.03);
+    }
+
+    input:focus,select:focus,textarea:focus{
+      border-color:#6ecfc4;
+      box-shadow:0 0 0 4px rgba(15,118,110,.10);
+    }
+
+    input[readonly],textarea[readonly]{
+      background:#f8fafc;
+      color:#344054;
+    }
+
+    textarea{
+      min-height:92px;
+      resize:vertical;
+    }
+
+    .gps-box{
+      margin-top:16px;
+      background:linear-gradient(180deg, #f8fbff, #f5faf8);
+      border:1px dashed #b8d4cd;
+      color:#365a57;
+      padding:14px 16px;
+      border-radius:16px;
+      font-size:13px;
+      line-height:1.5;
+    }
+
+    .models-wrap{
+      margin-top:20px;
+      background:#fbfdff;
+      border:1px solid var(--line);
+      border-radius:18px;
+      padding:18px;
+    }
+
+    .models-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:14px;
+      flex-wrap:wrap;
+    }
+
+    .models-head h3{
+      margin:0;
+      font-size:18px;
+      font-weight:800;
+      letter-spacing:-.02em;
+    }
+
+    .models-note{
+      color:var(--muted);
+      font-size:13px;
+    }
+
+    .models{
+      display:grid;
+      grid-template-columns:repeat(5, minmax(0,1fr));
+      gap:14px;
+    }
+
+    .model-card{
+      background:#fff;
+      border:1px solid var(--line);
+      border-radius:16px;
+      padding:12px;
+      box-shadow:0 2px 8px rgba(16,24,40,.03);
+    }
+
+    .model-card .small{
+      display:block;
+      margin-bottom:8px;
+      font-size:12px;
+      font-weight:800;
+      color:#475467;
+      letter-spacing:.03em;
+    }
+
+    .action-row{
+      display:flex;
+      justify-content:flex-end;
+      margin-top:18px;
+    }
+
+    button{
+      border:none;
+      border-radius:14px;
+      padding:14px 20px;
+      font-weight:800;
+      cursor:pointer;
+      transition:transform .15s ease, box-shadow .18s ease, background .18s ease;
+    }
+
+    button:hover{
+      transform:translateY(-1px);
+    }
+
+    .btn-primary{
+      background:linear-gradient(135deg, var(--primary), #0b5f59);
+      color:#fff;
+      box-shadow:0 12px 24px rgba(15,118,110,.22);
+    }
+
+    .btn-primary:hover{
+      background:linear-gradient(135deg, #118579, #0a524d);
+    }
+
     iframe{display:none}
-    .full{grid-column:1 / -1}
-    .gps-box{background:#f8fafc;border:1px dashed #cbd5e1;border-radius:10px;padding:12px}
-    @media(max-width:900px){.grid,.models{grid-template-columns:1fr 1fr}}
-    @media(max-width:600px){.grid,.models{grid-template-columns:1fr}}
+
+    .footer-note{
+      text-align:center;
+      color:var(--muted);
+      font-size:12px;
+      margin-top:8px;
+    }
+
+    @media (max-width:1100px){
+      .models{grid-template-columns:repeat(3, minmax(0,1fr))}
+    }
+
+    @media (max-width:780px){
+      .grid{grid-template-columns:1fr 1fr}
+      .models{grid-template-columns:repeat(2, minmax(0,1fr))}
+    }
+
+    @media (max-width:560px){
+      .app-shell{padding:16px 12px 40px}
+      .hero{padding:22px}
+      .grid{grid-template-columns:1fr}
+      .models{grid-template-columns:1fr}
+      .card-head,.card-body,.section-head,.section-body{padding-left:16px;padding-right:16px}
+      .action-row{justify-content:stretch}
+      .action-row button{width:100%}
+    }
   </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="title-line">
-    <h1>RSO Monthly Sales App</h1>
-    <div class="pill">Daikin RSO Reporting</div>
-  </div>
-
-  <div id="msg" class="msg"></div>
-
-  <div id="loginSection" class="section">
-    <h2>Login</h2>
-    <div class="grid">
-      <input id="empId" placeholder="Emp Id">
-      <input id="password" type="password" placeholder="Password" value="Daikin@123">
-      <button type="button" onclick="login()">Login</button>
-    </div>
-    <div class="small" style="margin-top:8px">Username = Emp Id | Default password = Daikin@123</div>
-  </div>
-
-  <div id="profileSection" class="section hidden">
-    <h2>RSO Details</h2>
-    <div class="grid">
-      <input id="branch" placeholder="Branch" readonly>
-      <input id="agencyCode" placeholder="Agency Code" readonly>
-      <input id="rsoName" placeholder="RSO Name" readonly>
-      <input id="empIdView" placeholder="Emp Id" readonly>
-      <input id="asmName" placeholder="ASM Name" readonly>
-      <input id="ddCode" placeholder="D&D Code" readonly>
-      <input id="ddName" placeholder="D&D Name" readonly>
-      <input id="cityView" placeholder="City" readonly>
-      <input id="month" type="month">
-    </div>
-  </div>
-
-  <div id="mainTabsSection" class="section hidden">
-    <div class="tabbar" role="tablist" aria-label="RSO Entry Sections">
-      <button type="button" class="tab-btn active" id="tab-sales" role="tab" aria-selected="true" aria-controls="panel-sales" onclick="switchTab('sales')">Model Monthly Sales</button>
-      <button type="button" class="tab-btn" id="tab-dealer" role="tab" aria-selected="false" aria-controls="panel-dealer" onclick="switchTab('dealer')">Add New Sub Dealer</button>
-    </div>
-
-    <div id="panel-sales" class="tab-panel active" role="tabpanel" aria-labelledby="tab-sales">
-      <h2>Model Monthly Sales</h2>
-
-      <div class="grid">
-        <input id="subDealerSearch" placeholder="Search Sub Dealer Name" oninput="filterSubDealers()">
-        <select id="subDealerDropdown" onchange="loadDealerDetails()">
-          <option value="">Select Sub Dealer</option>
-        </select>
-        <input id="subDealerCode" placeholder="Sub Dealer Code" readonly>
-
-        <input id="storeId" placeholder="Store Id" readonly>
-        <input id="dealerCity" placeholder="City" readonly>
-        <input id="areaMarket" placeholder="Area / Market" readonly>
-
-        <input id="subDealerCategory" placeholder="Sub-Dealer Category" readonly>
-        <input id="annualPotential" placeholder="Annual Potential-AC" readonly>
-        <input id="ownerNameView" placeholder="Owner Name" readonly>
-
-        <input id="ownerWhatsappView" placeholder="Owner Whatsapp No." readonly>
-        <input id="dealerPincode" placeholder="Dealer Pincode *" maxlength="6" inputmode="numeric">
-        <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
-
-        <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
-        <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
-
-        <textarea id="liveCapturedAddressSales" class="full" placeholder="Live GPS Address" readonly></textarea>
-      </div>
-
-      <div class="gps-box small" id="gpsStatusSales">GPS not captured yet.</div>
-
-      <h3 style="margin-top:18px">Model-wise Monthly Sales</h3>
-      <div id="modelsBox" class="models"></div>
-
-      <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbzWvH3xQBOw3yxp2WpeP3aCBMzv5d7wJ24mH_MySkIrsgLZqdStm7HZlzWZE63c_LuS/exec">
-        <input type="hidden" name="action" value="submitSales">
-        <input type="hidden" name="month" id="f_month">
-        <input type="hidden" name="branch" id="f_branch">
-        <input type="hidden" name="agencyCode" id="f_agencyCode">
-        <input type="hidden" name="rsoName" id="f_rsoName">
-        <input type="hidden" name="empId" id="f_empId">
-        <input type="hidden" name="asmName" id="f_asmName">
-        <input type="hidden" name="ddCode" id="f_ddCode">
-        <input type="hidden" name="ddName" id="f_ddName">
-        <input type="hidden" name="storeId" id="f_storeId">
-        <input type="hidden" name="subDealerCode" id="f_subDealerCode">
-        <input type="hidden" name="subDealerName" id="f_subDealerName">
-        <input type="hidden" name="ownerName" id="f_ownerName">
-        <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
-        <input type="hidden" name="dealerPincode" id="f_dealerPincode">
-        <input type="hidden" name="autoDetectedPincode" id="f_autoDetectedPincode">
-        <input type="hidden" name="dealerLatitude" id="f_dealerLatitude">
-        <input type="hidden" name="dealerLongitude" id="f_dealerLongitude">
-        <input type="hidden" name="capturedAddress" id="f_capturedAddress">
-        <input type="hidden" name="locationSource" id="f_locationSource">
-        <input type="hidden" name="city" id="f_city">
-        <input type="hidden" name="areaMarket" id="f_areaMarket">
-        <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
-        <input type="hidden" name="annualPotential" id="f_annualPotential">
-        <input type="hidden" name="annualSaleUpdated" id="f_annualSaleUpdated">
-        <input type="hidden" name="storeDisplayUpdated" id="f_storeDisplayUpdated">
-        <input type="hidden" name="daikinDisplayUpdated" id="f_daikinDisplayUpdated">
-        <div id="hiddenModelFields"></div>
-      </form>
-
-      <div style="margin-top:16px">
-        <button type="button" onclick="submitSales()">Submit Monthly Sales</button>
+  <div class="app-shell">
+    <div class="hero">
+      <div class="hero-top">
+        <div>
+          <h1>RSO Sales Application</h1>
+          <p>Daikin- The Air Specialist </p>
+        </div>
+        <div class="hero-badge">Daikin RSO Reporting</div>
       </div>
     </div>
 
-    <div id="panel-dealer" class="tab-panel" role="tabpanel" aria-labelledby="tab-dealer">
-      <h2>Add New Sub Dealer</h2>
+    <div id="msg" class="msg"></div>
 
-      <div class="grid">
-        <input id="newSubDealerCode" placeholder="Sub Dealer Code (Optional)">
-        <input id="newSubDealerName" placeholder="SubDealer Name *">
-        <input id="newOwnerName" placeholder="Owner Name *">
-        <input id="newOwnerWhatsapp" placeholder="Owner Whatsapp No. *">
-        <input id="newDealerPincode" placeholder="Dealer Pincode *" maxlength="6" inputmode="numeric">
-        <input id="newCity" placeholder="City *">
+    <div class="top-grid">
+      <div id="loginSection" class="card login-card">
+        <div class="card-head">
+          <div>
+            <h2 class="card-title">Login</h2>
+            <div class="card-sub">Enter your employee ID and password to access your mapped dealers.</div>
+          </div>
+        </div>
+        <div class="card-body">
+          <div class="grid">
+            <div class="field">
+              <label class="label" for="empId">Emp Id</label>
+              <input id="empId" placeholder="Enter Emp Id">
+            </div>
 
-        <input id="newAreaMarket" placeholder="Area / Market *">
-        <select id="newSubDealerCategory">
-          <option value="">Select Category *</option>
-          <option value="AC">AC</option>
-          <option value="HA">HA</option>
-        </select>
-        <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC *">
-        <input id="newStoreTotalDisplay" type="number" min="0" placeholder="Store Total Display *">
-        <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display *">
+            <div class="field">
+              <label class="label" for="password">Password</label>
+              <input id="password" type="password" placeholder="Password" value="Daikin@123">
+            </div>
 
-        <textarea id="liveCapturedAddressDealer" class="full" placeholder="Live GPS Address" readonly></textarea>
-      </div>
-
-      <div class="gps-box small" id="gpsStatusDealer">GPS not captured yet.</div>
-
-      <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbzWvH3xQBOw3yxp2WpeP3aCBMzv5d7wJ24mH_MySkIrsgLZqdStm7HZlzWZE63c_LuS/exec">
-        <input type="hidden" name="action" value="addDealer">
-        <input type="hidden" name="empId" id="add_empId">
-        <input type="hidden" name="subDealerCode" id="add_subDealerCode">
-        <input type="hidden" name="subDealerName" id="add_subDealerName">
-        <input type="hidden" name="ownerName" id="add_ownerName">
-        <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
-        <input type="hidden" name="dealerPincode" id="add_dealerPincode">
-        <input type="hidden" name="autoDetectedPincode" id="add_autoDetectedPincode">
-        <input type="hidden" name="dealerLatitude" id="add_dealerLatitude">
-        <input type="hidden" name="dealerLongitude" id="add_dealerLongitude">
-        <input type="hidden" name="capturedAddress" id="add_capturedAddress">
-        <input type="hidden" name="locationSource" id="add_locationSource">
-        <input type="hidden" name="city" id="add_city">
-        <input type="hidden" name="areaMarket" id="add_areaMarket">
-        <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
-        <input type="hidden" name="annualPotential" id="add_annualPotential">
-        <input type="hidden" name="storeTotalDisplay" id="add_storeTotalDisplay">
-        <input type="hidden" name="daikinDisplay" id="add_daikinDisplay">
-      </form>
-
-      <div style="margin-top:16px">
-        <button type="button" onclick="submitNewDealer()">Save New Sub Dealer</button>
+            <div class="field" style="align-self:end;">
+              <button type="button" class="btn-primary" onclick="login()">Login</button>
+            </div>
+          </div>
+          <div class="login-note">Username = Emp Id | Default password = Daikin@123</div>
+        </div>
       </div>
     </div>
 
-    <iframe name="hiddenFrame"></iframe>
+    <div id="profileSection" class="section hidden">
+      <div class="section-head">
+        <h2>RSO Details</h2>
+        <div class="section-desc">Profile information is fetched automatically after successful login.</div>
+      </div>
+      <div class="section-body">
+        <div class="grid">
+          <div class="field">
+            <label class="label" for="branch">Branch</label>
+            <input id="branch" placeholder="Branch" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="agencyCode">Agency Code</label>
+            <input id="agencyCode" placeholder="Agency Code" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="rsoName">RSO Name</label>
+            <input id="rsoName" placeholder="RSO Name" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="empIdView">Emp Id</label>
+            <input id="empIdView" placeholder="Emp Id" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="asmName">ASM Name</label>
+            <input id="asmName" placeholder="ASM Name" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="ddCode">D&D Code</label>
+            <input id="ddCode" placeholder="D&D Code" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="ddName">D&D Name</label>
+            <input id="ddName" placeholder="D&D Name" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="cityView">City</label>
+            <input id="cityView" placeholder="City" readonly>
+          </div>
+          <div class="field">
+            <label class="label" for="month">Month</label>
+            <input id="month" type="month">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="mainTabsSection" class="section hidden">
+      <div class="section-head">
+        <h2>Reporting Workspace</h2>
+        <div class="section-desc">Capture Daily sales or add a new sub dealer from the tabs below.</div>
+      </div>
+
+      <div class="section-body">
+        <div class="tabbar" role="tablist" aria-label="RSO Entry Sections">
+          <button type="button" class="tab-btn active" id="tab-sales" role="tab" aria-selected="true" aria-controls="panel-sales" onclick="switchTab('sales')">Sales Report</button>
+          <button type="button" class="tab-btn" id="tab-dealer" role="tab" aria-selected="false" aria-controls="panel-dealer" onclick="switchTab('dealer')">Add New Sub Dealer</button>
+        </div>
+
+        <div id="panel-sales" class="tab-panel active" role="tabpanel" aria-labelledby="tab-sales">
+          <div class="grid">
+            <div class="field">
+              <label class="label" for="subDealerSearch">Search Sub Dealer Name</label>
+              <input id="subDealerSearch" placeholder="Type dealer name to search" oninput="filterSubDealers()">
+            </div>
+
+            <div class="field">
+              <label class="label" for="subDealerDropdown">Select Sub Dealer</label>
+              <select id="subDealerDropdown" onchange="loadDealerDetails()">
+                <option value="">Select Sub Dealer</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="subDealerCode">Sub Dealer Code</label>
+              <input id="subDealerCode" placeholder="Sub Dealer Code" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="storeId">Store Id</label>
+              <input id="storeId" placeholder="Store Id" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="dealerCity">City</label>
+              <input id="dealerCity" placeholder="City" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="areaMarket">Area / Market</label>
+              <input id="areaMarket" placeholder="Area / Market" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="subDealerCategory">Sub-Dealer Category</label>
+              <input id="subDealerCategory" placeholder="Sub-Dealer Category" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="annualPotential">Annual Potential-AC</label>
+              <input id="annualPotential" placeholder="Annual Potential-AC" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ownerNameView">Owner Name</label>
+              <input id="ownerNameView" placeholder="Owner Name" readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="ownerWhatsappView">Owner Whatsapp No.</label>
+              <input id="ownerWhatsappView" placeholder="Owner Whatsapp No." readonly>
+            </div>
+
+            <div class="field">
+              <label class="label" for="dealerPincode">Dealer Pincode *</label>
+              <input id="dealerPincode" placeholder="Dealer Pincode" maxlength="6" inputmode="numeric">
+            </div>
+
+            <div class="field">
+              <label class="label" for="annualSaleUpdated">Annual Sale Updated</label>
+              <input id="annualSaleUpdated" type="number" min="0" placeholder="Annual Sale Updated">
+            </div>
+
+            <div class="field">
+              <label class="label" for="storeDisplayUpdated">Total Counter Display Updated</label>
+              <input id="storeDisplayUpdated" type="number" min="0" placeholder="Total Counter Display Updated">
+            </div>
+
+            <div class="field">
+              <label class="label" for="daikinDisplayUpdated">Daikin Display Updated</label>
+              <input id="daikinDisplayUpdated" type="number" min="0" placeholder="Daikin Display Updated">
+            </div>
+
+            <div class="textarea-field full">
+              <label class="label" for="liveCapturedAddressSales">Live GPS Address</label>
+              <textarea id="liveCapturedAddressSales" placeholder="Live GPS Address" readonly></textarea>
+            </div>
+          </div>
+
+          <div class="gps-box" id="gpsStatusSales">GPS not captured yet.</div>
+
+          <div class="models-wrap">
+            <div class="models-head">
+              <div>
+                <h3>Model-Wise Daily Sales</h3>
+                <div class="models-note">Enter quantities only for the models sold during the selected month.</div>
+              </div>
+            </div>
+            <div id="modelsBox" class="models"></div>
+          </div>
+
+          <form id="submitForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbzWvH3xQBOw3yxp2WpeP3aCBMzv5d7wJ24mH_MySkIrsgLZqdStm7HZlzWZE63c_LuS/exec">
+            <input type="hidden" name="action" value="submitSales">
+            <input type="hidden" name="month" id="f_month">
+            <input type="hidden" name="branch" id="f_branch">
+            <input type="hidden" name="agencyCode" id="f_agencyCode">
+            <input type="hidden" name="rsoName" id="f_rsoName">
+            <input type="hidden" name="empId" id="f_empId">
+            <input type="hidden" name="asmName" id="f_asmName">
+            <input type="hidden" name="ddCode" id="f_ddCode">
+            <input type="hidden" name="ddName" id="f_ddName">
+            <input type="hidden" name="storeId" id="f_storeId">
+            <input type="hidden" name="subDealerCode" id="f_subDealerCode">
+            <input type="hidden" name="subDealerName" id="f_subDealerName">
+            <input type="hidden" name="ownerName" id="f_ownerName">
+            <input type="hidden" name="ownerWhatsapp" id="f_ownerWhatsapp">
+            <input type="hidden" name="dealerPincode" id="f_dealerPincode">
+            <input type="hidden" name="autoDetectedPincode" id="f_autoDetectedPincode">
+            <input type="hidden" name="dealerLatitude" id="f_dealerLatitude">
+            <input type="hidden" name="dealerLongitude" id="f_dealerLongitude">
+            <input type="hidden" name="capturedAddress" id="f_capturedAddress">
+            <input type="hidden" name="locationSource" id="f_locationSource">
+            <input type="hidden" name="city" id="f_city">
+            <input type="hidden" name="areaMarket" id="f_areaMarket">
+            <input type="hidden" name="subDealerCategory" id="f_subDealerCategory">
+            <input type="hidden" name="annualPotential" id="f_annualPotential">
+            <input type="hidden" name="annualSaleUpdated" id="f_annualSaleUpdated">
+            <input type="hidden" name="storeDisplayUpdated" id="f_storeDisplayUpdated">
+            <input type="hidden" name="daikinDisplayUpdated" id="f_daikinDisplayUpdated">
+            <div id="hiddenModelFields"></div>
+          </form>
+
+          <div class="action-row">
+            <button type="button" class="btn-primary" onclick="submitSales()">Submit Sales Report</button>
+          </div>
+        </div>
+
+        <div id="panel-dealer" class="tab-panel" role="tabpanel" aria-labelledby="tab-dealer">
+          <div class="grid">
+            <div class="field">
+              <label class="label" for="newSubDealerCode">Sub Dealer Code (Optional)</label>
+              <input id="newSubDealerCode" placeholder="Sub Dealer Code">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newSubDealerName">SubDealer Name *</label>
+              <input id="newSubDealerName" placeholder="SubDealer Name">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newOwnerName">Owner Name *</label>
+              <input id="newOwnerName" placeholder="Owner Name">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newOwnerWhatsapp">Owner Whatsapp No. *</label>
+              <input id="newOwnerWhatsapp" placeholder="Owner Whatsapp No.">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newDealerPincode">Dealer Pincode *</label>
+              <input id="newDealerPincode" placeholder="Dealer Pincode" maxlength="6" inputmode="numeric">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newCity">City *</label>
+              <input id="newCity" placeholder="City">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newAreaMarket">Area / Market *</label>
+              <input id="newAreaMarket" placeholder="Area / Market">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newSubDealerCategory">Category *</label>
+              <select id="newSubDealerCategory">
+                <option value="">Select Category</option>
+                <option value="AC">AC</option>
+                <option value="HA">HA</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label class="label" for="newAnnualPotential">Annual Potential-AC *</label>
+              <input id="newAnnualPotential" type="number" min="0" placeholder="Annual Potential-AC">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newStoreTotalDisplay">Store Total Display *</label>
+              <input id="newStoreTotalDisplay" type="number" min="0" placeholder="Store Total Display">
+            </div>
+
+            <div class="field">
+              <label class="label" for="newDaikinDisplay">Daikin Display *</label>
+              <input id="newDaikinDisplay" type="number" min="0" placeholder="Daikin Display">
+            </div>
+
+            <div class="textarea-field full">
+              <label class="label" for="liveCapturedAddressDealer">Live GPS Address</label>
+              <textarea id="liveCapturedAddressDealer" placeholder="Live GPS Address" readonly></textarea>
+            </div>
+          </div>
+
+          <div class="gps-box" id="gpsStatusDealer">GPS not captured yet.</div>
+
+          <form id="addDealerForm" method="POST" target="hiddenFrame" action="https://script.google.com/macros/s/AKfycbzWvH3xQBOw3yxp2WpeP3aCBMzv5d7wJ24mH_MySkIrsgLZqdStm7HZlzWZE63c_LuS/exec">
+            <input type="hidden" name="action" value="addDealer">
+            <input type="hidden" name="empId" id="add_empId">
+            <input type="hidden" name="subDealerCode" id="add_subDealerCode">
+            <input type="hidden" name="subDealerName" id="add_subDealerName">
+            <input type="hidden" name="ownerName" id="add_ownerName">
+            <input type="hidden" name="ownerWhatsapp" id="add_ownerWhatsapp">
+            <input type="hidden" name="dealerPincode" id="add_dealerPincode">
+            <input type="hidden" name="autoDetectedPincode" id="add_autoDetectedPincode">
+            <input type="hidden" name="dealerLatitude" id="add_dealerLatitude">
+            <input type="hidden" name="dealerLongitude" id="add_dealerLongitude">
+            <input type="hidden" name="capturedAddress" id="add_capturedAddress">
+            <input type="hidden" name="locationSource" id="add_locationSource">
+            <input type="hidden" name="city" id="add_city">
+            <input type="hidden" name="areaMarket" id="add_areaMarket">
+            <input type="hidden" name="subDealerCategory" id="add_subDealerCategory">
+            <input type="hidden" name="annualPotential" id="add_annualPotential">
+            <input type="hidden" name="storeTotalDisplay" id="add_storeTotalDisplay">
+            <input type="hidden" name="daikinDisplay" id="add_daikinDisplay">
+          </form>
+
+          <div class="action-row">
+            <button type="button" class="btn-primary" onclick="submitNewDealer()">Save New Sub Dealer</button>
+          </div>
+        </div>
+
+        <iframe name="hiddenFrame"></iframe>
+      </div>
+    </div>
+
+    <div class="footer-note">Professional reporting interface for Daikin RSO sales operations.</div>
   </div>
-</div>
 
 <script>
 const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzWvH3xQBOw3yxp2WpeP3aCBMzv5d7wJ24mH_MySkIrsgLZqdStm7HZlzWZE63c_LuS/exec';
@@ -241,6 +806,7 @@ function createModelInputs(){
   box.innerHTML = '';
   MODEL_COLUMNS.forEach(model => {
     const wrap = document.createElement('div');
+    wrap.className = 'model-card';
     wrap.innerHTML = '<label class="small">' + model + '</label><input type="number" min="0" id="model_' + model + '" placeholder="' + model + ' Qty">';
     box.appendChild(wrap);
   });
@@ -406,7 +972,6 @@ async function reverseGeocodeLight(lat, lon) {
     if (!response.ok) throw new Error('Reverse geocoding failed with status ' + response.status);
 
     const data = await response.json();
-    console.log('Reverse geocode response:', data);
 
     const autoDetectedPincode = ((data.postcode || data.postalCode || '') + '').trim();
     const capturedAddress = buildAddressFromBDC(data, lat, lon);
@@ -416,7 +981,6 @@ async function reverseGeocodeLight(lat, lon) {
       autoDetectedPincode
     };
   } catch (e) {
-    console.error('reverseGeocodeLight error:', e);
     return {
       capturedAddress: 'Lat: ' + lat + ', Lon: ' + lon,
       autoDetectedPincode: ''
